@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cocktail Costing – Café Commercio</title>
+    <meta name="description"
+        content="Calcola il prezzo di vendita dei cocktail in base a ingredienti, quantità, overhead, IVA e target di costo." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0b0f;
+            --card: #13131a;
+            --muted: #8b8ca7;
+            --text: #f4f5f7;
+            --accent: #8b5cf6;
+            /* viola elegante */
+            --accent-2: #22d3ee;
+            /* ciano */
+            --danger: #ef4444;
+            --ok: #22c55e;
+            --ring: rgba(139, 92, 246, .35);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            background: radial-gradient(1200px 800px at 0% 0%, #10101a, var(--bg)), var(--bg);
+            color: var(--text);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+        }
+
+        .wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+
+            padding: 5px;
+        }
+
+        .title {
+            font-size: clamp(20px, 3.5vw, 28px);
+            font-weight: 700;
+            letter-spacing: .2px;
+
+            margin-bottom: 15px;
+        }
+
+        .sub {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        @media (min-width: 920px) {
+            .grid {
+                grid-template-columns: 380px 1fr;
+            }
+        }
+
+        .card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, .02), rgba(255, 255, 255, .01)), var(--card);
+            border: 1px solid rgba(255, 255, 255, .06);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+        }
+
+        .card h3 {
+            margin: 4px 0 12px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            color: var(--muted);
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            margin: 8px 0 6px;
+        }
+
+        input,
+        select,
+        textarea,
+        button {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, .08);
+            background: #0f0f15;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: box-shadow .15s ease, border-color .15s ease, transform .04s ease;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--ring);
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .row3 {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .row4 {
+            display: grid;
+            grid-template-columns: 1.8fr 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border: 0;
+            font-weight: 600;
+        }
+
+        .btn.ghost {
+            background: transparent;
+            border: 1px dashed rgba(255, 255, 255, .18);
+            color: var(--muted);
+        }
+
+        .btn.danger {
+            background: var(--danger);
+            border: 0;
+        }
+
+        .btn.ok {
+            background: var(--ok);
+            border: 0;
+            color: #031b0b;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 8px 6px;
+            font-size: 13px;
+        }
+
+        thead th {
+            color: var(--muted);
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
+        }
+
+        tbody tr {
+            border-bottom: 1px dashed rgba(255, 255, 255, .07);
+        }
+
+        .pill {
+            font-size: 11px;
+            color: #0b0b0f;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            padding: 4px 8px;
+            border-radius: 999px;
+            display: inline-flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .mono {
+            font-variant-numeric: tabular-nums;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        .footer {
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: 12px;
+            text-align: center;
+            opacity: .8;
+        }
+
+        .link {
+            color: #b9baff;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <div>
+                <div class="title">Cocktail Costing <span class="pill">offline-ready</span></div>
+                <div class="sub">Calcola i prezzi in base a ingredienti, quantità, overhead, IVA e target di costo.
+                    Salva tutto in locale (niente server).</div>
+            </div>
+            <div class="toolbar">
+                <button class="btn ghost" id="btn-export">Esporta dati</button>
+                <label for="file-import" class="btn ghost" style="display:inline-block;">Importa dati</label>
+                <input type="file" id="file-import" accept="application/json" style="display:none;" />
+            </div>
+        </header>
+
+        <div class="grid" style="margin-top:16px;">
+            <!-- Left: Settings & Ingredients -->
+            <section class="card">
+                <h3>Impostazioni</h3>
+                <div class="row">
+                    <div>
+                        <label>Valuta</label>
+                        <select id="currency">
+                            <option value="€">€ (Euro)</option>
+                            <option value="$">$ (USD)</option>
+                            <option value="£">£ (GBP)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>IVA (%)</label>
+                        <input type="number" id="vat" min="0" step="0.1" value="10" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div>
+                        <label>Overhead fisso per drink (es. tovagliolo, cannuccia) – <span class="mono"
+                                id="ohLabel">€</span></label>
+                        <input type="number" id="fixedOverhead" min="0" step="0.01" value="0.15" />
+                    </div>
+                    <div>
+                        <label>Scarto / calo (%)</label>
+                        <input type="number" id="wastePct" min="0" step="0.1" value="2" />
+                    </div>
+                </div>
+
+                <h3 style="margin-top:18px;">Ingredienti</h3>
+                <div class="row4">
+                    <input id="ingName" placeholder="Nome (es. Gin)" />
+                    <select id="ingUnit">
+                        <option value="ml">ml</option>
+                        <option value="g">g</option>
+                        <option value="pz">pz</option>
+                    </select>
+                    <input id="ingPackSize" type="number" min="0" step="0.01" placeholder="Quantità confezione" />
+                    <input id="ingPackCost" type="number" min="0" step="0.01" placeholder="Costo confezione" />
+                </div>
+                <div class="row" style="margin-top:8px;">
+                    <button class="btn primary" id="addIng">Aggiungi ingrediente</button>
+                    <button class="btn ghost" id="resetIng">Svuota lista</button>
+                </div>
+
+                <div
+                    style="margin-top:12px; max-height:260px; overflow:auto; border-radius:12px; border:1px solid rgba(255,255,255,.06);">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ingrediente</th>
+                                <th>Unità</th>
+                                <th class="mono">Conf.</th>
+                                <th class="mono">Costo Conf.</th>
+                                <th class="mono">Costo/Unità</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="ingTable"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Right: Recipe & Results -->
+            <section class="card">
+                <h3>Ricetta</h3>
+                <div class="row3">
+                    <select id="recipeIng"></select>
+                    <input id="recipeQty" type="number" min="0" step="0.5" placeholder="Quantità" />
+                    <select id="recipeUnit">
+                        <option value="ml">ml</option>
+                        <option value="g">g</option>
+                        <option value="pz">pz</option>
+                    </select>
+                </div>
+                <div class="row" style="margin-top:8px;">
+                    <button class="btn primary" id="addLine">Aggiungi alla ricetta</button>
+                    <button class="btn ghost" id="clearRecipe">Svuota ricetta</button>
+                </div>
+
+                <div
+                    style="margin-top:12px; max-height:240px; overflow:auto; border-radius:12px; border:1px solid rgba(255,255,255,.06);">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ingrediente</th>
+                                <th class="mono">Q.tà</th>
+                                <th>Unità</th>
+                                <th class="mono">Costo</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="recipeTable"></tbody>
+                    </table>
+                </div>
+
+                <div class="card" style="margin-top:12px; background:#0d0d13;">
+                    <h3>Target Prezzo</h3>
+                    <div class="row">
+                        <div>
+                            <label>Modalità calcolo</label>
+                            <select id="mode">
+                                <option value="cogs">Target Costo/Prezzo (%)</option>
+                                <option value="markup">Markup moltiplicativo (×)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label id="modeLabel">COGS % (tipico 18–22%)</label>
+                            <input type="number" id="modeValue" min="0" step="0.1" value="20" />
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:8px;">
+                        <div>
+                            <label>Costo lavoro/tempo per drink (opz.) – <span class="mono"
+                                    id="laborLabel">€</span></label>
+                            <input id="labor" type="number" min="0" step="0.01" value="0" />
+                        </div>
+                        <div>
+                            <label>Arrotondamento finale (es. 0.50 = ai 50 cent) – <span class="mono"
+                                    id="roundLabel">€</span></label>
+                            <input id="roundTo" type="number" min="0" step="0.1" value="0.50" />
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:12px;">
+                        <button class="btn ok" id="calc">Calcola prezzo</button>
+                        <button class="btn ghost" id="quickDuplicate">Duplica come nuovo cocktail</button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:12px; background:#0d0d13;">
+                    <h3>Risultati</h3>
+                    <div id="results" class="mono" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div>Costi ingredienti: <b id="rCost">€0.00</b></div>
+                        <div>Overhead fisso: <b id="rOH">€0.00</b></div>
+                        <div>Scarto applicato: <b id="rWaste">€0.00</b></div>
+                        <div>Costo lavoro: <b id="rLabor">€0.00</b></div>
+                        <div>COGS totale: <b id="rCOGS">€0.00</b></div>
+                        <div>Prezzo senza IVA: <b id="rNoVAT">€0.00</b></div>
+                        <div>IVA: <b id="rVAT">€0.00</b></div>
+                        <div style="font-size:18px;">Prezzo al cliente: <b id="rFinal" style="font-size:20px;">€0.00</b>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <section class="card" style="margin-top:16px;">
+            <h3>Salva cocktail</h3>
+            <div class="row">
+                <input id="cocktailName" placeholder="Nome cocktail (es. Garibaldi Royale)" />
+                <button class="btn primary" id="saveCocktail">Salva</button>
+            </div>
+            <div
+                style="margin-top:12px; max-height:280px; overflow:auto; border-radius:12px; border:1px solid rgba(255,255,255,.06);">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th class="mono">COGS</th>
+                            <th class="mono">Prezzo</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="savedTable"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="footer">Made for Café Commercio · Funziona offline · Deploy immediato su GitHub Pages</div>
+    </div>
+
+    <script>
+        /***************************
+         * Storage helpers
+         ***************************/
+        const S = {
+            load() {
+                try { return JSON.parse(localStorage.getItem('cc_costing_v1') || '{}'); } catch { return {}; }
+            },
+            save(state) {
+                localStorage.setItem('cc_costing_v1', JSON.stringify(state));
+            }
+        };
+
+        const state = Object.assign({
+            currency: '€',
+            vat: 10,
+            fixedOverhead: 0.15,
+            wastePct: 2,
+            labor: 0,
+            roundTo: 0.50,
+            mode: 'cogs',
+            modeValue: 20,
+            ingredients: [],
+            recipe: [],
+            cocktails: []
+        }, S.load());
+
+        // Elements
+        const el = (id) => document.getElementById(id);
+        const currencyEl = el('currency');
+        const vatEl = el('vat');
+        const fixedOverheadEl = el('fixedOverhead');
+        const wastePctEl = el('wastePct');
+        const laborEl = el('labor');
+        const roundToEl = el('roundTo');
+        const modeEl = el('mode');
+        const modeValueEl = el('modeValue');
+
+        const ingName = el('ingName');
+        const ingUnit = el('ingUnit');
+        const ingPackSize = el('ingPackSize');
+        const ingPackCost = el('ingPackCost');
+        const addIng = el('addIng');
+        const resetIng = el('resetIng');
+        const ingTable = el('ingTable');
+
+        const recipeIng = el('recipeIng');
+        const recipeQty = el('recipeQty');
+        const recipeUnit = el('recipeUnit');
+        const addLine = el('addLine');
+        const clearRecipe = el('clearRecipe');
+        const recipeTable = el('recipeTable');
+
+        const rCost = el('rCost');
+        const rOH = el('rOH');
+        const rWaste = el('rWaste');
+        const rLabor = el('rLabor');
+        const rCOGS = el('rCOGS');
+        const rNoVAT = el('rNoVAT');
+        const rVAT = el('rVAT');
+        const rFinal = el('rFinal');
+
+        const modeLabel = el('modeLabel');
+        const ohLabel = el('ohLabel');
+        const laborLabel = el('laborLabel');
+        const roundLabel = el('roundLabel');
+
+        const calcBtn = el('calc');
+        const quickDuplicate = el('quickDuplicate');
+
+        const saveCocktail = el('saveCocktail');
+        const cocktailName = el('cocktailName');
+        const savedTable = el('savedTable');
+
+        const btnExport = el('btn-export');
+        const fileImport = el('file-import');
+
+        function fmt(n) {
+            const sym = state.currency || '€';
+            const fixed = Number(n || 0).toFixed(2);
+            return sym + fixed;
+        }
+
+        function pricePerUnit(ing) {
+            // costo per unità coerente con l'unità dell'ingrediente
+            if (!ing.packSize || !ing.packCost) return 0;
+            const ppu = ing.packCost / ing.packSize; // es. €/ml per alcolici
+            return ppu;
+        }
+
+        function refreshUI() {
+            // Settings
+            currencyEl.value = state.currency;
+            vatEl.value = state.vat;
+            fixedOverheadEl.value = state.fixedOverhead;
+            wastePctEl.value = state.wastePct;
+            laborEl.value = state.labor;
+            roundToEl.value = state.roundTo;
+            modeEl.value = state.mode;
+            modeValueEl.value = state.modeValue;
+            ohLabel.textContent = state.currency;
+            laborLabel.textContent = state.currency;
+            roundLabel.textContent = state.currency;
+
+            // Ingredients table & select
+            recipeIng.innerHTML = '<option value="">Seleziona ingrediente…</option>';
+            ingTable.innerHTML = '';
+            state.ingredients.forEach((ing, idx) => {
+                const tr = document.createElement('tr');
+                const ppu = pricePerUnit(ing);
+                tr.innerHTML = `
+          <td>${ing.name}</td>
+          <td>${ing.unit}</td>
+          <td class="mono">${ing.packSize} ${ing.unit}</td>
+          <td class="mono">${fmt(ing.packCost)}</td>
+          <td class="mono">${fmt(ppu)} / ${ing.unit}</td>
+          <td><button class="btn danger" data-del-ing="${idx}">Elimina</button></td>`;
+                ingTable.appendChild(tr);
+
+                const opt = document.createElement('option');
+                opt.value = ing.id;
+                opt.textContent = ing.name;
+                recipeIng.appendChild(opt);
+            });
+
+            // Recipe table
+            recipeTable.innerHTML = '';
+            state.recipe.forEach((row, idx) => {
+                const ing = state.ingredients.find(i => i.id === row.ingId);
+                const unit = row.unit;
+                const ppu = ing ? pricePerUnit(ing) : 0;
+                // Se unità diverse, non convertiamo automaticamente: calcoliamo per unità dichiarata.
+                const cost = ppu * row.qty;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+          <td>${ing ? ing.name : 'Ingrediente rimosso'}</td>
+          <td class="mono">${row.qty}</td>
+          <td>${unit}</td>
+          <td class="mono">${fmt(cost)}</td>
+          <td><button class="btn danger" data-del-line="${idx}">Rimuovi</button></td>`;
+                recipeTable.appendChild(tr);
+            });
+
+            // Saved cocktails
+            savedTable.innerHTML = '';
+            state.cocktails.forEach((c, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+          <td>${c.name}</td>
+          <td class="mono">${fmt(c.cogs)}</td>
+          <td class="mono">${fmt(c.price)}</td>
+          <td class="mono"><button class="btn ghost" data-load-cocktail="${idx}">Carica</button> <button class="btn danger" data-del-cocktail="${idx}">Elimina</button></td>`;
+                savedTable.appendChild(tr);
+            });
+
+            S.save(state);
+        }
+
+        function addIngredient() {
+            const name = ingName.value.trim();
+            const unit = ingUnit.value;
+            const packSize = parseFloat(ingPackSize.value);
+            const packCost = parseFloat(ingPackCost.value);
+            if (!name || !packSize || !packCost) { alert('Completa nome, quantità confezione e costo.'); return; }
+            const id = 'i_' + crypto.randomUUID();
+            state.ingredients.push({ id, name, unit, packSize, packCost });
+            ingName.value = ''; ingPackSize.value = ''; ingPackCost.value = '';
+            refreshUI();
+        }
+
+        function addRecipeLine() {
+            const ingId = recipeIng.value;
+            const qty = parseFloat(recipeQty.value);
+            const unit = recipeUnit.value;
+            if (!ingId || !qty) { alert('Seleziona ingrediente e quantità.'); return; }
+            const ing = state.ingredients.find(i => i.id === ingId);
+            if (!ing) { alert('Ingrediente non trovato.'); return; }
+            if (ing.unit !== unit) {
+                if (!confirm(`L'ingrediente è in ${ing.unit}, ma stai aggiungendo in ${unit}. Proseguire comunque?`)) return;
+            }
+            state.recipe.push({ ingId, qty, unit });
+            recipeIng.value = ''; recipeQty.value = '';
+            refreshUI();
+        }
+
+        function calc() {
+            // Costi ingredienti
+            let ingredientsCost = 0;
+            for (const row of state.recipe) {
+                const ing = state.ingredients.find(i => i.id === row.ingId);
+                if (!ing) continue;
+                const ppu = pricePerUnit(ing); // costo per unità dell'ingrediente
+                ingredientsCost += ppu * row.qty; // se l'unit non coincide, abbiamo già avvisato
+            }
+            const fixedOH = Number(state.fixedOverhead || 0);
+            const waste = Number(state.wastePct || 0);
+            const labor = Number(state.labor || 0);
+
+            const wasteValue = ingredientsCost * (waste / 100);
+            const cogs = ingredientsCost + fixedOH + wasteValue + labor; // costo totale drink
+
+            // Prezzo senza IVA a seconda della modalità
+            let priceNoVAT = 0;
+            if (state.mode === 'cogs') {
+                const cogsPct = Number(state.modeValue || 0) / 100; // es. 0.20
+                if (cogsPct <= 0) { alert('COGS% deve essere > 0'); return; }
+                priceNoVAT = cogs / cogsPct;
+            } else {
+                const mk = Number(state.modeValue || 0); // es. 4x
+                if (mk <= 0) { return; }
+                priceNoVAT = cogs * mk;
+            }
+
+            // IVA
+            const vatPct = Number(state.vat || 0) / 100;
+            let finalPrice = priceNoVAT * (1 + vatPct);
+
+            // Arrotondamento
+            const step = Number(state.roundTo || 0);
+            if (step > 0) {
+                finalPrice = Math.ceil(finalPrice / step) * step;
+            }
+
+            // Update UI
+            rCost.textContent = fmt(ingredientsCost);
+            rOH.textContent = fmt(fixedOH);
+            rWaste.textContent = fmt(wasteValue);
+            rLabor.textContent = fmt(labor);
+            rCOGS.textContent = fmt(cogs);
+            rNoVAT.textContent = fmt(priceNoVAT);
+            rVAT.textContent = fmt(priceNoVAT * vatPct);
+            rFinal.textContent = fmt(finalPrice);
+
+            return { ingredientsCost, fixedOH, wasteValue, labor, cogs, priceNoVAT, finalPrice };
+        }
+
+        function save() {
+            const name = cocktailName.value.trim();
+            if (!name) { alert('Dai un nome al cocktail.'); return; }
+            const res = calc();
+            if (!res) return;
+            state.cocktails.push({ name, cogs: res.cogs, price: res.finalPrice, recipe: JSON.parse(JSON.stringify(state.recipe)) });
+            cocktailName.value = '';
+            refreshUI();
+        }
+
+        function loadCocktail(idx) {
+            const c = state.cocktails[idx];
+            if (!c) return;
+            state.recipe = JSON.parse(JSON.stringify(c.recipe || []));
+            refreshUI();
+            calc();
+        }
+
+        function exportData() {
+            const data = JSON.stringify(state, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'cocktail_costing_backup.json'; a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const obj = JSON.parse(e.target.result);
+                    Object.assign(state, obj);
+                    refreshUI(); calc();
+                } catch (err) { alert('File non valido'); }
+            };
+            reader.readAsText(file);
+        }
+
+        // Event listeners
+        currencyEl.addEventListener('change', () => { state.currency = currencyEl.value; refreshUI(); calc(); });
+        vatEl.addEventListener('input', () => { state.vat = Number(vatEl.value || 0); calc(); S.save(state); });
+        fixedOverheadEl.addEventListener('input', () => { state.fixedOverhead = Number(fixedOverheadEl.value || 0); calc(); S.save(state); });
+        wastePctEl.addEventListener('input', () => { state.wastePct = Number(wastePctEl.value || 0); calc(); S.save(state); });
+        laborEl.addEventListener('input', () => { state.labor = Number(laborEl.value || 0); calc(); S.save(state); });
+        roundToEl.addEventListener('input', () => { state.roundTo = Number(roundToEl.value || 0); calc(); S.save(state); });
+
+        modeEl.addEventListener('change', () => {
+            state.mode = modeEl.value;
+            modeLabel.textContent = state.mode === 'cogs' ? 'COGS % (tipico 18–22%)' : 'Markup (moltiplicatore, es. 4 = ×4)';
+            calc(); S.save(state);
+        });
+        modeValueEl.addEventListener('input', () => { state.modeValue = Number(modeValueEl.value || 0); calc(); S.save(state); });
+
+        addIng.addEventListener('click', addIngredient);
+        resetIng.addEventListener('click', () => { if (confirm('Sicuro di svuotare la lista ingredienti?')) { state.ingredients = []; refreshUI(); } });
+        ingTable.addEventListener('click', (e) => {
+            const idx = e.target.getAttribute('data-del-ing');
+            if (idx !== null) { state.ingredients.splice(Number(idx), 1); refreshUI(); calc(); }
+        });
+
+        addLine.addEventListener('click', addRecipeLine);
+        clearRecipe.addEventListener('click', () => { if (confirm('Svuotare la ricetta?')) { state.recipe = []; refreshUI(); calc(); } });
+        recipeTable.addEventListener('click', (e) => {
+            const idx = e.target.getAttribute('data-del-line');
+            if (idx !== null) { state.recipe.splice(Number(idx), 1); refreshUI(); calc(); }
+        });
+
+        calcBtn.addEventListener('click', calc);
+        quickDuplicate.addEventListener('click', () => {
+            const copy = JSON.parse(JSON.stringify(state.recipe));
+            state.recipe = copy; refreshUI(); calc();
+            alert('Ricetta duplicata. Modifica le quantità per creare una variante.');
+        });
+
+        saveCocktail.addEventListener('click', save);
+        savedTable.addEventListener('click', (e) => {
+            const load = e.target.getAttribute('data-load-cocktail');
+            if (load !== null) { loadCocktail(Number(load)); }
+            const del = e.target.getAttribute('data-del-cocktail');
+            if (del !== null) { state.cocktails.splice(Number(del), 1); refreshUI(); }
+        });
+
+        btnExport.addEventListener('click', exportData);
+        fileImport.addEventListener('change', (e) => { if (e.target.files[0]) importData(e.target.files[0]); });
+
+        // Seed esempio se vuoto
+        if ((state.ingredients || []).length === 0) {
+            state.ingredients = [
+                { id: 'i_gin', name: 'Gin Premium', unit: 'ml', packSize: 700, packCost: 22.00 },
+                { id: 'i_tonic', name: 'Tonica', unit: 'ml', packSize: 200, packCost: 0.80 },
+                { id: 'i_lime', name: 'Lime', unit: 'pz', packSize: 1, packCost: 0.60 },
+                { id: 'i_ice', name: 'Ghiaccio (kg→g)', unit: 'g', packSize: 1000, packCost: 0.30 },
+                { id: 'i_menta', name: 'Menta (rametto)', unit: 'pz', packSize: 1, packCost: 0.20 }
+            ];
+        }
+
+        refreshUI();
+        calc();
+
+        // UX: tocco mobile attivo sulle label-import
+        document.addEventListener('touchstart', () => { }, { passive: true });
+    </script>
+</body>
+
+</html>
